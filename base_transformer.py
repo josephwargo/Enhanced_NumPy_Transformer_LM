@@ -9,6 +9,8 @@ import Layer_Blocks.layer_norm as ln
 import Layer_Blocks.transformer_block as tb
 import json
 
+from Optimizer import adamw_optimizer
+
 # entire net
 class transformer(object):
 ####################################
@@ -24,16 +26,10 @@ class transformer(object):
         # , output_layer_activation
         , loss_function='cross_entropy_loss'
         , learning_rate=.001, epochs=1, batch_size=8
-        , adam=False, clip_val=1, debug=False
+        , clip_val=1, debug=False
     ):
         self.embeddings = embeddings
-
         self.debug = debug
-
-        # errors
-        if adam & (learning_rate>.01):
-            print('Warning: Learning rate may be too high for ADAM optimizer to function properly')
-       
 
         # layer details
         self.input_layer_shape = input_layer_shape
@@ -46,7 +42,6 @@ class transformer(object):
         # hyperparameters
         self.epochs = epochs
         self.batch_size = batch_size
-        self.adam = adam
         self.learning_rate = cp.float32(learning_rate)
         self.loss_function = loss_function
         self.clip_val = cp.float32(clip_val)
@@ -58,7 +53,7 @@ class transformer(object):
         self.input_layer = ff.neuron_layer(
               input_shape=self.input_layer_shape, output_shape=self.d_model
             , activation=self.input_layer_activation
-            , clip_val=self.clip_val, adam=self.adam
+            , clip_val=self.clip_val
         )
         self.positional_embeddings = pe.positional_embedding(max_seq_len=1024, input_layer_shape=self.d_model, clip_val=clip_val)
 
@@ -73,7 +68,6 @@ class transformer(object):
                   num_heads=self.hidden_layer_num_heads, d_model=self.d_model
                 , activation=layer_activation
                 , clip_val=self.clip_val
-                , adam=self.adam
             )
         
         # backwards list to iterate through during backwards pass
@@ -88,7 +82,19 @@ class transformer(object):
         self.output_layer = ff.neuron_layer(
               input_shape=output_layer_input_shape, output_shape=self.output_shape
             , activation=None # activation is none so this returns the logits, we apply the activation later for gradients
-            , clip_val=self.clip_val, is_output_layer=True, adam=self.adam)
+            , clip_val=self.clip_val, is_output_layer=True)
+
+####################################
+# Dictionary of params and grads #
+####################################
+        self.model_dict = {}
+        self.get_model_dict()
+
+        self.grad_dict = {}
+        self.get_grad_dict()
+
+        self.model_config = {}
+        self.get_model_config()
 
 ####################################
 # Forward Pass #
@@ -153,31 +159,34 @@ class transformer(object):
 # Gradient updates and clearing - all at once #
 ####################################
     def update(self):
-        self.output_layer.update(self.learning_rate)
-        self.output_layer_norm.update(self.learning_rate)
+        pass
+        # switching architecture to update by iterating through a flat dict instead of having the update live in the layer classes
+        self.grad_clip()
+        self.update_params()
+        self.clear_grad()
 
-        for layer_name in self.rev_transformer_layers:
-            transformer_block = self.transformer_layers[layer_name]
-            transformer_block.update(self.learning_rate)
-        
-        self.positional_embeddings.update(self.learning_rate)
-        self.input_layer.update(self.learning_rate)
+    # TODO: update to clip by global norm instead of clip val of 1
+    def grad_clip(self):
+        for grad_name, gradient in self.grad_dict:
+            cp.clip(gradient, -self.clip_val, self.clip_val, out=gradient)
+
+    def update_params(self):
+        for param_key in self.model_dict.keys():
+            self.model_dict[param_key] += -self.learning_rate * self.grad_dict[param_key]
 
     def clear_grad(self):
-        self.output_layer.clear_grad()
-        self.output_layer_norm.clear_grad()
-
-        for layer_name in self.rev_transformer_layers:
-            transformer_block = self.transformer_layers[layer_name]
-            transformer_block.clear_grad()
-        
-        self.positional_embeddings.clear_grad()
-        self.input_layer.clear_grad()
+        for grad_name, gradient in self.grad_dict:
+            gradient.fill(0)
 
 ####################################
 # Training #
 ####################################
-    def train(self, x_batches, Y_batches, num_batches):
+    def train(self, x_batches, Y_batches, num_batches, optimizer=None):
+
+        if optimizer=='adamw':
+            optimizer = adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
+            optimizer.init_all_adamw(optimizer)
+
         for batch_num in range(num_batches):
             x_batch = x_batches[batch_num]
             Y_batch = Y_batches[batch_num]
@@ -198,68 +207,106 @@ class transformer(object):
 
 
 ####################################
-# Saving trained model #
+# Flat dicts of params and gradients #
 ####################################
     # creates a dictionary that has all weights and biases for the corresponding layers + configs necessary to recreate the model
-    def get_model_dict(self, mode=None):
-        model_dict = {}
-
+    def get_model_dict(self):
         # input layer dict
-        model_dict['input_layer_weights'] = self.input_layer.layer_weights
-        model_dict['input_layer_biases'] = self.input_layer.bias
+        self.model_dict['input_layer_weights'] = self.input_layer.layer_weights
+        self.model_dict['input_layer_biases'] = self.input_layer.bias
 
         # pos embeddings
-        model_dict['positional_embeddings'] = self.positional_embeddings.embeddings
+        self.model_dict['positional_embeddings'] = self.positional_embeddings.embeddings
 
         # transformer layers
-        transformer_dict = {}
         for layer_name, block in self.transformer_layers.items():
-            transformer_dict = transformer_dict.copy()
             # layer norm 1 
-            model_dict[f'{layer_name}_layer_norm_1_gamma'] = block.layer_norm_1.gamma
-            model_dict[f'{layer_name}_layer_norm_1_beta'] = block.layer_norm_1.beta
+            self.model_dict[f'{layer_name}_layer_norm_1_gamma'] = block.layer_norm_1.gamma
+            self.model_dict[f'{layer_name}_layer_norm_1_beta'] = block.layer_norm_1.beta
 
             # attention block
-            model_dict[f'{layer_name}_attention_block_W_q'] = block.self_attention.head.W_q
-            model_dict[f'{layer_name}_attention_block_W_k'] = block.self_attention.head.W_k
-            model_dict[f'{layer_name}_attention_block_W_v'] = block.self_attention.head.W_v
-            model_dict[f'{layer_name}_attention_block_W_o'] = block.self_attention.W_o
+            self.model_dict[f'{layer_name}_attention_block_W_q'] = block.self_attention.head.W_q
+            self.model_dict[f'{layer_name}_attention_block_W_k'] = block.self_attention.head.W_k
+            self.model_dict[f'{layer_name}_attention_block_W_v'] = block.self_attention.head.W_v
+            self.model_dict[f'{layer_name}_attention_block_W_o'] = block.self_attention.W_o
 
             # layer norm 2
-            model_dict[f'{layer_name}_layer_norm_2_gamma'] = block.layer_norm_2.gamma
-            model_dict[f'{layer_name}_layer_norm_2_beta'] = block.layer_norm_2.beta
+            self.model_dict[f'{layer_name}_layer_norm_2_gamma'] = block.layer_norm_2.gamma
+            self.model_dict[f'{layer_name}_layer_norm_2_beta'] = block.layer_norm_2.beta
 
             # feed forward
-            model_dict[f'{layer_name}_feed_forward_weights'] = block.feed_forward_layer.layer_weights
-            model_dict[f'{layer_name}_feed_forward_biases'] = block.feed_forward_layer.bias
+            self.model_dict[f'{layer_name}_feed_forward_weights'] = block.feed_forward_layer.layer_weights
+            self.model_dict[f'{layer_name}_feed_forward_biases'] = block.feed_forward_layer.bias
         
         # output layer norm
-        model_dict['output_layer_norm_gamma'] = self.output_layer_norm.gamma
-        model_dict['output_layer_norm_beta'] = self.output_layer_norm.beta
+        self.model_dict['output_layer_norm_gamma'] = self.output_layer_norm.gamma
+        self.model_dict['output_layer_norm_beta'] = self.output_layer_norm.beta
 
         # output layer
-        model_dict['output_layer_weights'] = self.output_layer.layer_weights
-        model_dict['output_layer_biases'] = self.output_layer.bias
+        self.model_dict['output_layer_weights'] = self.output_layer.layer_weights
+        self.model_dict['output_layer_biases'] = self.output_layer.bias
 
-        config = {
-        "input_layer_shape": self.input_layer_shape,
-        'input_layer_activation': self.input_layer_activation,
-        "d_model": self.d_model,
-        "hidden_layer_activations": self.hidden_layer_activations,
-        "hidden_layer_num_heads": self.hidden_layer_num_heads,
-        "output_shape": self.output_shape
-        }
+    # creates a dictionary that has all weights and biases for the corresponding layers + configs necessary to recreate the model
+    def get_grad_dict(self):
 
-        return model_dict, config
+        # input layer dict
+        self.grad_dict['input_layer_weights'] = self.input_layer.dL_dW
+        self.grad_dict['input_layer_biases'] = self.input_layer.dL_db
+
+        # pos embeddings
+        self.grad_dict['positional_embeddings'] = self.positional_embeddings.dL_dE
+
+        # transformer layers
+        for layer_name, block in self.transformer_layers.items():
+            # layer norm 1 
+            self.grad_dict[f'{layer_name}_layer_norm_1_gamma'] = block.layer_norm_1.dL_dgamma
+            self.grad_dict[f'{layer_name}_layer_norm_1_beta'] = block.layer_norm_1.dL_dbeta
+
+            # attention block
+            self.grad_dict[f'{layer_name}_attention_block_W_q'] = block.self_attention.head.dL_dW_q
+            self.grad_dict[f'{layer_name}_attention_block_W_k'] = block.self_attention.head.dL_dW_k
+            self.grad_dict[f'{layer_name}_attention_block_W_v'] = block.self_attention.head.dL_dW_v
+            self.grad_dict[f'{layer_name}_attention_block_W_o'] = block.self_attention.dL_W_o
+
+            # layer norm 2
+            self.grad_dict[f'{layer_name}_layer_norm_2_gamma'] = block.layer_norm_2.dL_dgamma
+            self.grad_dict[f'{layer_name}_layer_norm_2_beta'] = block.layer_norm_2.dL_dbeta
+
+            # feed forward
+            self.grad_dict[f'{layer_name}_feed_forward_weights'] = block.feed_forward_layer.dL_dW
+            self.grad_dict[f'{layer_name}_feed_forward_biases'] = block.feed_forward_layer.dL_db
+        
+        # output layer norm
+        self.grad_dict['output_layer_norm_gamma'] = self.output_layer_norm.dL_dgamma
+        self.grad_dict['output_layer_norm_beta'] = self.output_layer_norm.dL_dbeta
+
+        # output layer
+        self.grad_dict['output_layer_weights'] = self.output_layer.dL_dW
+        self.grad_dict['output_layer_biases'] = self.output_layer.dL_db
+
+####################################
+# Saving trained model #
+####################################
+    def get_model_config(self):
+        self.model_config = {
+                "input_layer_shape": self.input_layer_shape,
+                'input_layer_activation': self.input_layer_activation,
+                "d_model": self.d_model,
+                "hidden_layer_activations": self.hidden_layer_activations,
+                "hidden_layer_num_heads": self.hidden_layer_num_heads,
+                "output_shape": self.output_shape
+                }
 
     # saving dict of model to filepath
     def save_model(self, file_path):
-        model_dict, config = self.get_model_dict()
+        # model_dict = self.get_model_dict()
+
+        # model_config = self.get_model_config()
 
         with open(f'{file_path}/config.json', 'w') as f:
-            json.dump(config, f)
+            json.dump(self.model_config, f)
 
-        cp.savez_compressed(f'{file_path}/model.npz', **model_dict)
+        cp.savez_compressed(f'{file_path}/model.npz', **self.model_dict)
 
     # recreating model from dict so it can be queried or further trained using same setup
     def load_model(self, file_path):
