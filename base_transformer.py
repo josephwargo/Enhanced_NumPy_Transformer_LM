@@ -26,7 +26,7 @@ class transformer(object):
         # , output_layer_activation
         , loss_function='cross_entropy_loss'
         , learning_rate=.001, epochs=1, batch_size=8
-        , clip_val=1, debug=False
+        , clip_val=1, optimizer=None, debug=False
     ):
         self.embeddings = embeddings
         self.debug = debug
@@ -46,6 +46,8 @@ class transformer(object):
         self.loss_function = loss_function
         self.clip_val = cp.float32(clip_val)
         self.activations = hidden_layer_activations
+
+        self.optimizer=optimizer
         
 ####################################
 # Init Input Layer
@@ -156,14 +158,16 @@ class transformer(object):
         # leaving updates and clearing grads out, this is just a single instance of a backward pass and gradient accumulation
 
 ####################################
-# Gradient updates and clearing - all at once #
+# Gradient clipping, updates, and clearing #
 ####################################
     def update(self):
-        pass
-        # switching architecture to update by iterating through a flat dict instead of having the update live in the layer classes
-        self.grad_clip()
-        self.update_params()
-        self.clear_grad()
+
+        if self.optimizer=='adamw':
+            self.optimizer.clip_all_adamw()
+            self.optimizer.update_all_adamw()
+        else:
+            self.grad_clip()
+            self.update_params()
 
     # TODO: update to clip by global norm instead of clip val of 1
     def grad_clip(self):
@@ -181,11 +185,11 @@ class transformer(object):
 ####################################
 # Training #
 ####################################
-    def train(self, x_batches, Y_batches, num_batches, optimizer=None):
+    def train(self, x_batches, Y_batches, num_batches):
 
-        if optimizer=='adamw':
-            optimizer = adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
-            optimizer.init_all_adamw(optimizer)
+        if self.optimizer=='adamw':
+            self.optimizer = adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
+            self.optimizer.init_all_adamw(self.optimizer)
 
         for batch_num in range(num_batches):
             x_batch = x_batches[batch_num]
