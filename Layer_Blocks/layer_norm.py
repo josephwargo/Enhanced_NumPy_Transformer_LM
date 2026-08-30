@@ -9,15 +9,15 @@ class layer_norm(object):
 
         self.clip_val = clip_val
 
-        self.gamma = cp.ones(shape=input_size)
-        self.beta = cp.zeros(shape=input_size)
+        self.gamma = cp.ones(shape=input_size).astype(cp.float32)
+        self.beta = cp.zeros(shape=input_size).astype(cp.float32)
 
         self.prev_layer_output = None
         self.x_std_dev = None
         self.x_hat_val = None
 
-        self.dL_dgamma = cp.zeros_like(self.gamma)
-        self.dL_dbeta = cp.zeros_like(self.beta)
+        self.dL_dgamma = cp.zeros_like(self.gamma).astype(cp.float32)
+        self.dL_dbeta = cp.zeros_like(self.beta).astype(cp.float32)
 
 ####################################
 # Forward Pass #
