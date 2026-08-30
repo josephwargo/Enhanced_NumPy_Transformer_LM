@@ -13,7 +13,7 @@ class attention_head(object):
         self.clip_val = clip_val
 
         self.head_dimension = int(self.d_model / self.num_heads)
-        self.dim_sqrt = cp.sqrt(self.head_dimension)
+        self.dim_sqrt = cp.sqrt(self.head_dimension).astype(cp.float32)
 
         # initialization of weights - using only Xavier for now
         self.dim_for_xavier = self.d_model + self.d_model

@@ -116,8 +116,8 @@ class neuron_layer(object):
         self.bias += -learning_rate * self.dL_db
     
     def clear_grad(self):
-        self.dL_dW.fill(0)
-        self.dL_db.fill(0)
+        self.dL_dW.fill(0).astype(cp.float32)
+        self.dL_db.fill(0).astype(cp.float32)
 
     
 
