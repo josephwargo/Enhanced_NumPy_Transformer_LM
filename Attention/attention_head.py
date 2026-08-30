@@ -37,9 +37,9 @@ class attention_head(object):
         self.softmax_masked_score = None
 
         # storing grads
-        self.dL_dW_q = cp.zeros_like(self.W_q)
-        self.dL_dW_k = cp.zeros_like(self.W_k)
-        self.dL_dW_v = cp.zeros_like(self.W_v)
+        self.dL_dW_q = cp.zeros_like(self.W_q).astype(cp.float32)
+        self.dL_dW_k = cp.zeros_like(self.W_k).astype(cp.float32)
+        self.dL_dW_v = cp.zeros_like(self.W_v).astype(cp.float32)
 
 ####################################
 # Forward Pass #

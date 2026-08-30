@@ -30,8 +30,8 @@ class neuron_layer(object):
         # type of layer
         self.is_output_layer = is_output_layer
 
-        self.dL_dW = cp.zeros_like(self.layer_weights)
-        self.dL_db = cp.zeros_like(self.bias)
+        self.dL_dW = cp.zeros_like(self.layer_weights).astype(cp.float32)
+        self.dL_db = cp.zeros_like(self.bias).astype(cp.float32)
 
         # adam
         # TODO: implement

@@ -28,7 +28,7 @@ class attention_block(object):
         xavier_val = cp.sqrt(2/(self.d_model+self.d_model))
         self.W_o = cp.random.normal(0, xavier_val, size=(self.d_model, self.d_model)).astype(cp.float32) # does not matter whether in_dim or out_dim is first as both are d_model
 
-        self.dL_dW_o = cp.zeros_like(self.W_o)
+        self.dL_dW_o = cp.zeros_like(self.W_o).astype(cp.float32)
 
         # hidden state
         self.hidden_state = None
