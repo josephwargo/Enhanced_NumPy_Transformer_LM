@@ -9,7 +9,7 @@ import Layer_Blocks.layer_norm as ln
 import Layer_Blocks.transformer_block as tb
 import json
 
-from Optimizer import adamw_optimizer
+from Optimizer import adamw_optimizer as adamw
 
 # entire net
 class transformer(object):
@@ -188,7 +188,7 @@ class transformer(object):
     def train(self, x_batches, Y_batches, num_batches):
 
         if self.optimizer=='adamw':
-            self.optimizer = adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
+            self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
             self.optimizer.init_all_adamw(self.optimizer)
 
         for batch_num in range(num_batches):
