@@ -47,9 +47,10 @@ class neuron_layer(object):
         # if it is an output layer - no activation
         if self.is_output_layer:
             hidden_state = x @ self.layer_weights.T + self.bias
-            # storing hidden state BEFORE any activation is done (could come later for output layers as these go into softmax for prediction)
+            # explicitly not storing the hidden state for an output layer. it is NOT needed;
+            # as instead the value is returned at the end of the full forward pass
+            self.hidden_state = None
             if train:
-                self.hidden_state = hidden_state
                 self.prev_layer_output = x
         # an other layer - yes activation
         else:
