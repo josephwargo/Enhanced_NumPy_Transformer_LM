@@ -73,13 +73,13 @@ class adamw_optimizer(object):
 
         
     def init_all_adamw(self, optimizer_parent):
-        for params_name, params in self.model_dict:
+        for params_name, params in self.model_dict.items():
             self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
 
     def clip_all_adamw(self):
-        for params_name, params in self.model_dict:
+        for params_name, params in self.model_dict.items():
             params.clip_grad()
 
     def update_all_adamw(self, time_step, learning_rate):
-        for params_name, params in self.model_dict:
+        for params_name, params in self.model_dict.items():
             params.update_adamw(time_step, learning_rate)
