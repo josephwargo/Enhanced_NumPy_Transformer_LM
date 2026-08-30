@@ -270,7 +270,7 @@ class transformer(object):
             self.grad_dict[f'{layer_name}_attention_block_W_q'] = block.self_attention.head.dL_dW_q
             self.grad_dict[f'{layer_name}_attention_block_W_k'] = block.self_attention.head.dL_dW_k
             self.grad_dict[f'{layer_name}_attention_block_W_v'] = block.self_attention.head.dL_dW_v
-            self.grad_dict[f'{layer_name}_attention_block_W_o'] = block.self_attention.dL_Wo
+            self.grad_dict[f'{layer_name}_attention_block_W_o'] = block.self_attention.dL_dW_o
 
             # layer norm 2
             self.grad_dict[f'{layer_name}_layer_norm_2_gamma'] = block.layer_norm_2.dL_dgamma
