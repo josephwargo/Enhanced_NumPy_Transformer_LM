@@ -52,19 +52,19 @@ class adamw_optimizer(object):
         def __init__(self, optimizer_parent, params):
             self.params = params
 
-            print(params)
-            if len(params.shape) > 1:
-                input_shape = params.shape[0]
-                output_shape = params.shape[1]
-                params_shape = (input_shape, output_shape)
-            else:
-                params_shape = (params.shape[0])
+            # print(params)
+            # if len(params.shape) > 1:
+            #     input_shape = params.shape[0]
+            #     output_shape = params.shape[1]
+            #     params_shape = (input_shape, output_shape)
+            # else:
+            #     params_shape = (params.shape[0])
             # parent - from which we inherit betas, epsilon, scheduler, and reg factor
             self.optimizer_parent = optimizer_parent
             # momentum
-            self.md_params = cp.zeros(shape=params_shape).astype(cp.float32)
+            self.md_params = cp.zeros(shape=params.shape).astype(cp.float32)
             # variance
-            self.vd_params = cp.zeros(shape=params_shape).astype(cp.float32)
+            self.vd_params = cp.zeros(shape=params.shape).astype(cp.float32)
 
         # clipping by the global norm, but passing in parameter from model and doing the update inplace (no duplicates, saves memory)
         def clip_grad(self):
