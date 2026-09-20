@@ -29,6 +29,24 @@ class adamw_optimizer(object):
     def get_global_norm(self):
         pass
 
+    def init_all_adamw(self, optimizer_parent):
+            print("see adamw params: before the for loop")
+            for params_name, params in self.model_dict.items():
+                print("see adamw params:")
+                print(params)
+                self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
+            
+    
+    def clip_all_adamw(self):
+        for params_name, params in self.model_dict.items():
+            print('clipping Adam')
+            params.clip_grad()
+
+    def update_all_adamw(self, time_step, learning_rate):
+        for params_name, params in self.model_dict.items():
+            print('updating Adam')
+            params.update_adamw(time_step, learning_rate)
+
     class adamw_instance(object):
         # def __init__(self, optimizer_parent, input_shape, output_shape):
         def __init__(self, optimizer_parent, params):
@@ -78,20 +96,4 @@ class adamw_optimizer(object):
             self.params += -update_val
 
         
-    def init_all_adamw(self, optimizer_parent):
-        print("see adamw params: before the for loop")
-        for params_name, params in self.model_dict.items():
-            print("see adamw params:")
-            print(params)
-            self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
-        
-
-    def clip_all_adamw(self):
-        for params_name, params in self.model_dict.items():
-            print('clipping Adam')
-            params.clip_grad()
-
-    def update_all_adamw(self, time_step, learning_rate):
-        for params_name, params in self.model_dict.items():
-            print('updating Adam')
-            params.update_adamw(time_step, learning_rate)
+    
