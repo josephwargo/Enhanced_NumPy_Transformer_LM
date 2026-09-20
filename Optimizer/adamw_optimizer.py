@@ -33,6 +33,7 @@ class adamw_optimizer(object):
         print("see adamw params: before the for loop")
         for params_name, params in self.model_dict.items():
             print("see adamw params:")
+            print("if you see this, it is working")
             self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
             
     
