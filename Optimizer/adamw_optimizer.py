@@ -78,8 +78,10 @@ class adamw_optimizer(object):
 
     def clip_all_adamw(self):
         for params_name, params in self.model_dict.items():
+            print('clipping Adam')
             params.clip_grad()
 
     def update_all_adamw(self, time_step, learning_rate):
         for params_name, params in self.model_dict.items():
+            print('updating Adam')
             params.update_adamw(time_step, learning_rate)
