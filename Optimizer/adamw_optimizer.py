@@ -30,11 +30,11 @@ class adamw_optimizer(object):
         pass
 
     def init_all_adamw(self, optimizer_parent):
-            print("see adamw params: before the for loop")
-            for params_name, params in self.model_dict.items():
-                print("see adamw params:")
-                print(params)
-                self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
+        print("see adamw params: before the for loop")
+        for params_name, params in self.model_dict.items():
+            print("see adamw params:")
+            print(params)
+            self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
             
     
     def clip_all_adamw(self):
