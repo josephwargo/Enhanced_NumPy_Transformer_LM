@@ -58,7 +58,7 @@ class adamw_optimizer(object):
                 output_shape = params.shape[1]
                 params_shape = (input_shape, output_shape)
             else:
-                params_shape = params.shape[0]
+                params_shape = (params.shape[0])
             # parent - from which we inherit betas, epsilon, scheduler, and reg factor
             self.optimizer_parent = optimizer_parent
             # momentum
