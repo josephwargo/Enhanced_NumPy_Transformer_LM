@@ -189,7 +189,6 @@ class transformer(object):
 
         if self.optimizer_type=='adamw':
             self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
-            print(self.optimizer.model_dict)
             self.optimizer.init_all_adamw(self.optimizer)
 
         for batch_num in range(num_batches):
