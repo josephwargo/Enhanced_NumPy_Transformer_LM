@@ -79,6 +79,7 @@ class adamw_optimizer(object):
 
         
     def init_all_adamw(self, optimizer_parent):
+        print("see adamw params: before the for loop")
         for params_name, params in self.model_dict.items():
             print("see adamw params:")
             print(params)
