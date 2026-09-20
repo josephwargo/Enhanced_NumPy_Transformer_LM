@@ -33,6 +33,7 @@ class adamw_optimizer(object):
         # def __init__(self, optimizer_parent, input_shape, output_shape):
         def __init__(self, optimizer_parent, params):
             self.params = params
+            print(params)
             if len(params.shape) > 1:
                 input_shape = params.shape[0]
                 output_shape = params.shape[1]
