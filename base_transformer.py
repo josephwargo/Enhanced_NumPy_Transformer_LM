@@ -192,6 +192,7 @@ class transformer(object):
             self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
             print("after initial init")
             self.optimizer.init_all_adamw(self.optimizer)
+            print("wait do we get all the way here?")
 
         for batch_num in range(num_batches):
             x_batch = x_batches[batch_num]
