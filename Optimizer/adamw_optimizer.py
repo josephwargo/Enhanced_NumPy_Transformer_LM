@@ -30,36 +30,24 @@ class adamw_optimizer(object):
         pass
 
     def init_all_adamw(self, optimizer_parent):
-        print("see adamw params: before the for loop")
         for params_name, params in self.model_dict.items():
-            print("see adamw params:")
-            print("if you see this, it is working")
             self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
             
     
     def clip_all_adamw(self):
-        for params_name, params in self.model_dict.items():
-            print('clipping Adam')
-            params.clip_grad()
+        for optimizer_name, optimizer in self.optimizer_dict.items():
+            print('clipping Adam - via optimizer dict')
+            optimizer.clip_grad()
 
     def update_all_adamw(self, time_step, learning_rate):
-        for params_name, params in self.model_dict.items():
-            print('updating Adam')
-            params.update_adamw(time_step, learning_rate)
+        for optimizer_name, optimizer in self.optimizer_dict.items():
+            print('updating Adam - via optimizer dict')
+            optimizer.update_adamw(time_step, learning_rate)
 
     class adamw_instance(object):
         # def __init__(self, optimizer_parent, input_shape, output_shape):
         def __init__(self, optimizer_parent, params):
             self.params = params
-
-            # print(params)
-            # if len(params.shape) > 1:
-            #     input_shape = params.shape[0]
-            #     output_shape = params.shape[1]
-            #     params_shape = (input_shape, output_shape)
-            # else:
-            #     params_shape = (params.shape[0])
-            # parent - from which we inherit betas, epsilon, scheduler, and reg factor
             self.optimizer_parent = optimizer_parent
             # momentum
             self.md_params = cp.zeros(shape=params.shape).astype(cp.float32)
