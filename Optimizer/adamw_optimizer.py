@@ -8,20 +8,22 @@ class adamw_optimizer(object):
 ####################################
     def __init__(self, model_dict, grad_dict, reg_factor, scheduler_type, eta_min, eta_max, time_max):
 
+        # dicts to store pointers to params, gradients, and per-param child optimizers
         self.model_dict = model_dict
         self.grad_dict = grad_dict
+        self.optimizer_dict = {}
 
         self.reg_factor = reg_factor
         
-        # constants
+        # constants for adamw first and second moments
         self.beta1 = .9
         self.beta2 = .999
         self.epsilon = 1e-8
+
         # only implemented for cosine annealing thus far
         self.scheduler = sch.scheduler(scheduler_type=scheduler_type, eta_min=eta_min, eta_max=eta_max, time_max=time_max)
 
-        self.optimizer_dict = {}
-
+        # 
         self.clip_val_threshold = 1
         self.global_norm = 1
 

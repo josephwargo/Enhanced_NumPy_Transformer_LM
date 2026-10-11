@@ -1,5 +1,5 @@
-import cupy as cp
-from math import pi
+# import cupy as cp
+from math import pi, cos
 class scheduler(object):
 ####################################
 # Initializations #
@@ -15,6 +15,6 @@ class scheduler(object):
 
 
     def get_lr(self, time_step):
-        time_step_ratio = pi * (time_step / self.time_max)
-        eta_t = self.eta_min + (.5 * self.eta_spread * (1 + cp.cos(time_step_ratio)))
+        time_step_ratio = min((time_step / self.time_max), 1)
+        eta_t = self.eta_min + (.5 * self.eta_spread * (1 + cos(pi * time_step_ratio)))
         return eta_t
