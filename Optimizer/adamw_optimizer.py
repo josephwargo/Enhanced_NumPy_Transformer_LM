@@ -70,7 +70,7 @@ class adamw_optimizer(object):
             self.grads=grads
 
             # only using the weight decay regularization for weights, not for biases or norms (1d arrays)
-            if self.params.ndims>1:
+            if len(self.params.shape)>1:
                 self.reg_factor = reg_factor
             else:
                 self.reg_factor = 0
