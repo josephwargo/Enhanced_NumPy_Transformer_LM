@@ -22,24 +22,29 @@ class adamw_optimizer(object):
 
         self.optimizer_dict = {}
 
-        self.clip_val = 1 #self.get_global_norm()
+        self.clip_val_threshold = 1
+        self.global_norm = 1
 
         self.time_step = 1 # time step counter as we loop through each instance of the optimizer
-
-        # self.init_all_adamw()
-
-    # TODO: calculate global norm for clip_val
-    def get_global_norm(self):
-        pass
 
     def init_all_adamw(self, optimizer_parent):
         # initializing an individual instance of adam optimizer for each parameter in the model. this is because each param will need its own vd and md specific to its shape
         # So the best way to architect this is to have a single parent optimizer (adamw_optimizer) with children for each model param (adamw_instance)
+        # note that this is also adding the respective gradients relevant to each optimizer
         for params_name, params in self.model_dict.items():
             self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params, self.grad_dict[params_name])
         # TODO: update this to also load in the grad_dict
-            
+    
+    # calculate global norm across all gradients of params
+    def get_global_norm(self):
+        sum_of_squares = 0
+        for grad_name, grad in self.grad_dict.items():
+            sum_of_squares += cp.sum(grad**2)
+        self.global_norm = cp.sqrt(sum_of_squares)
+
     def clip_all_adamw(self):
+        # getting global norm first
+        self.get_global_norm()
         for optimizer_name, optimizer in self.optimizer_dict.items(): # looping through dict of child optimizers and calling function that clips grads
             optimizer.clip_grad()
 
@@ -48,6 +53,7 @@ class adamw_optimizer(object):
             optimizer.update_adamw(learning_rate)
         self.time_step += 1
 
+    # the adamw child instances that are unique for each param in the model
     class adamw_instance(object):
         def __init__(self, optimizer_parent, params, grads):
             self.params = params
@@ -60,7 +66,8 @@ class adamw_optimizer(object):
 
         # clipping by the global norm, but passing in parameter from model and doing the update inplace (no duplicates, saves memory)
         def clip_grad(self):
-            cp.clip(self.grads, -self.optimizer_parent.clip_val, self.optimizer_parent.clip_val, out=self.grads)
+            if self.optimizer_parent.global_norm > self.optimizer_parent.clip_val_threshold:
+                self.grads *= self.optimizer_parent.clip_val_threshold / self.optimizer_parent.global_norm
 
         def update_adamw(self, learning_rate):
             # momentum stored
@@ -88,11 +95,11 @@ class adamw_optimizer(object):
             
             update_val = schedule_multiplier*pre_scheduled_update
             
-            print(f'Pre-Scheduled update val shape: {pre_scheduled_update.shape}')
-            print(f'Param shape: {self.params.shape}')
-            print(f'Pre-Scheduled update val sum: {cp.sum(pre_scheduled_update)}')
-            print(f'Update val shape: {update_val.shape}')
-            print()
+            # print(f'Pre-Scheduled update val shape: {pre_scheduled_update.shape}')
+            # print(f'Param shape: {self.params.shape}')
+            # print(f'Pre-Scheduled update val sum: {cp.sum(pre_scheduled_update)}')
+            # print(f'Update val shape: {update_val.shape}')
+            # print()
 
 
             self.params += -update_val
