@@ -83,11 +83,14 @@ class adamw_optimizer(object):
             pre_scheduled_update = (learning_rate * md_params_hat) / (cp.sqrt(vd_params_hat) + self.optimizer_parent.epsilon) + decoupled_weight_decay
             print(f'Pre-Scheduled update val shape: {pre_scheduled_update.shape}')
             print(f'Param shape: {self.params.shape}')
-            print(f'Pre-Scheduled update val sum: {sum(pre_scheduled_update)}')
-            print()
+            print(f'Pre-Scheduled update val sum: {cp.sum(pre_scheduled_update)}')
+            
             update_val = schedule_multiplier*pre_scheduled_update
+            print(f'Update val shape: {update_val.shape}')
+            print()
+
 
             self.params += -update_val
 
         
-    
+# 11.1715726852417
