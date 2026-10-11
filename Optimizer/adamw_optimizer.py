@@ -76,10 +76,12 @@ class adamw_optimizer(object):
             vd_params_hat = self.vd_params/(1-b2T)
 
             schedule_multiplier = self.optimizer_parent.scheduler.get_lr(self.optimizer_parent.time_step)
+            print(f'Schedule multiplier val: {schedule_multiplier}')
 
             # calculating update val in multiple steps so it's explainable
             decoupled_weight_decay = self.optimizer_parent.reg_factor * self.params
             pre_scheduled_update = (learning_rate * md_params_hat) / (cp.sqrt(vd_params_hat) + self.optimizer_parent.epsilon) + decoupled_weight_decay
+            print(f'Pre-Scheduled update val: {pre_scheduled_update}')
             update_val = schedule_multiplier*pre_scheduled_update
 
             self.params += -update_val
