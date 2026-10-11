@@ -16,5 +16,5 @@ class scheduler(object):
 
     def get_lr(self, time_step):
         time_step_ratio = pi * (time_step / self.time_max)
-        eta_t = self.eta_min + (.5 * self.eta_spread * (1 + cp.cosine(time_step_ratio)))
+        eta_t = self.eta_min + (.5 * self.eta_spread * (1 + cp.cos(time_step_ratio)))
         return eta_t

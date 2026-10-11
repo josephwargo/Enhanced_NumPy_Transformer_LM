@@ -32,23 +32,21 @@ class adamw_optimizer(object):
         pass
 
     def init_all_adamw(self, optimizer_parent):
+        # initializing an individual instance of adam optimizer for each parameter in the model. this is because each param will need its own vd and md specific to its shape
+        # So the best way to architect this is to have a single parent optimizer (adamw_optimizer) with children for each model param (adamw_instance)
         for params_name, params in self.model_dict.items():
             self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
             
-    
     def clip_all_adamw(self):
-        for optimizer_name, optimizer in self.optimizer_dict.items():
-            print('clipping Adam - via optimizer dict')
+        for optimizer_name, optimizer in self.optimizer_dict.items(): # looping through dict of child optimizers and calling function that clips grads
             optimizer.clip_grad()
 
-    def update_all_adamw(self, learning_rate):
+    def update_all_adamw(self, learning_rate): # looping through dict of child optimizers and calling function that updates params
         for optimizer_name, optimizer in self.optimizer_dict.items():
-            print('updating Adam - via optimizer dict')
             optimizer.update_adamw(learning_rate)
         self.time_step += 1
 
     class adamw_instance(object):
-        # def __init__(self, optimizer_parent, input_shape, output_shape):
         def __init__(self, optimizer_parent, params):
             self.params = params
             self.optimizer_parent = optimizer_parent
