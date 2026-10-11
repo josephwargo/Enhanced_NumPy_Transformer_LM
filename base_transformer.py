@@ -162,7 +162,7 @@ class transformer(object):
 ####################################
     def update(self):
 
-        if self.optimizer_type=='adamw':
+        if self.optimizer_type=='adamw': # currently only have AdamW set up
             self.optimizer.clip_all_adamw()
             self.optimizer.update_all_adamw(learning_rate=self.learning_rate)
         else:
@@ -188,7 +188,7 @@ class transformer(object):
     def train(self, x_batches, Y_batches, num_batches):
 
         if self.optimizer_type=='adamw':
-            self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
+            self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict, reg_factor=1, scheduler_type='cosine_annealing', eta_min=0, eta_max=1, time_max=100)
             self.optimizer.init_all_adamw(self.optimizer)
 
         for batch_num in range(num_batches):

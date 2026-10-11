@@ -6,9 +6,10 @@ class adamw_optimizer(object):
 ####################################
 # Initializations #
 ####################################
-    def __init__(self, model_dict, reg_factor, scheduler_type, eta_min, eta_max, time_max):
+    def __init__(self, model_dict, grad_dict, reg_factor, scheduler_type, eta_min, eta_max, time_max):
 
         self.model_dict = model_dict
+        self.grad_dict = grad_dict
 
         self.reg_factor = reg_factor
         
@@ -35,7 +36,8 @@ class adamw_optimizer(object):
         # initializing an individual instance of adam optimizer for each parameter in the model. this is because each param will need its own vd and md specific to its shape
         # So the best way to architect this is to have a single parent optimizer (adamw_optimizer) with children for each model param (adamw_instance)
         for params_name, params in self.model_dict.items():
-            self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params)
+            self.optimizer_dict['adamw_'+params_name] = self.adamw_instance(optimizer_parent, params, self.grad_dict[params_name])
+        # TODO: update this to also load in the grad_dict
             
     def clip_all_adamw(self):
         for optimizer_name, optimizer in self.optimizer_dict.items(): # looping through dict of child optimizers and calling function that clips grads
@@ -47,9 +49,10 @@ class adamw_optimizer(object):
         self.time_step += 1
 
     class adamw_instance(object):
-        def __init__(self, optimizer_parent, params):
+        def __init__(self, optimizer_parent, params, grads):
             self.params = params
             self.optimizer_parent = optimizer_parent
+            self.grads=grads
             # momentum
             self.md_params = cp.zeros(shape=params.shape).astype(cp.float32)
             # variance
@@ -57,16 +60,16 @@ class adamw_optimizer(object):
 
         # clipping by the global norm, but passing in parameter from model and doing the update inplace (no duplicates, saves memory)
         def clip_grad(self):
-            cp.clip(self.params, -self.optimizer_parent.clip_val, self.optimizer_parent.clip_val, out=self.params)
+            cp.clip(self.grads, -self.optimizer_parent.clip_val, self.optimizer_parent.clip_val, out=self.grads)
 
         def update_adamw(self, learning_rate):
             # momentum stored
             self.md_params *= self.optimizer_parent.beta1
-            self.md_params += (1-self.optimizer_parent.beta1)*self.params
+            self.md_params += (1-self.optimizer_parent.beta1)*self.grads
             
             # variance stored
             self.vd_params *= self.optimizer_parent.beta2
-            self.vd_params += (1-self.optimizer_parent.beta2)*(self.params**2)
+            self.vd_params += (1-self.optimizer_parent.beta2)*(self.grads**2)
 
             # non-persistent updates to momentum and variance that are specific to this update 
             # doing ^t on beta1 and beta2 once per step
@@ -79,13 +82,15 @@ class adamw_optimizer(object):
             print(f'Schedule multiplier val: {schedule_multiplier}')
 
             # calculating update val in multiple steps so it's explainable
-            decoupled_weight_decay = self.optimizer_parent.reg_factor * self.params
+            decoupled_weight_decay = self.optimizer_parent.reg_factor * self.grads
             pre_scheduled_update = (learning_rate * md_params_hat) / (cp.sqrt(vd_params_hat) + self.optimizer_parent.epsilon) + decoupled_weight_decay
+            
+            
+            update_val = schedule_multiplier*pre_scheduled_update
+            
             print(f'Pre-Scheduled update val shape: {pre_scheduled_update.shape}')
             print(f'Param shape: {self.params.shape}')
             print(f'Pre-Scheduled update val sum: {cp.sum(pre_scheduled_update)}')
-            
-            update_val = schedule_multiplier*pre_scheduled_update
             print(f'Update val shape: {update_val.shape}')
             print()
 
