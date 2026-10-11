@@ -164,7 +164,7 @@ class transformer(object):
 
         if self.optimizer_type=='adamw':
             self.optimizer.clip_all_adamw()
-            self.optimizer.update_all_adamw()
+            self.optimizer.update_all_adamw(learning_rate=self.learning_rate)
         else:
             self.grad_clip()
             self.update_params()

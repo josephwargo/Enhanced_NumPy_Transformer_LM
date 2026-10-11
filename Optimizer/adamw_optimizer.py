@@ -23,6 +23,8 @@ class adamw_optimizer(object):
 
         self.clip_val = 1 #self.get_global_norm()
 
+        self.time_step = 1 # time step counter as we loop through each instance of the optimizer
+
         # self.init_all_adamw()
 
     # TODO: calculate global norm for clip_val
@@ -39,10 +41,11 @@ class adamw_optimizer(object):
             print('clipping Adam - via optimizer dict')
             optimizer.clip_grad()
 
-    def update_all_adamw(self, time_step, learning_rate):
+    def update_all_adamw(self, learning_rate):
         for optimizer_name, optimizer in self.optimizer_dict.items():
             print('updating Adam - via optimizer dict')
-            optimizer.update_adamw(time_step, learning_rate)
+            optimizer.update_adamw(learning_rate)
+        self.time_step += 1
 
     class adamw_instance(object):
         # def __init__(self, optimizer_parent, input_shape, output_shape):
@@ -58,7 +61,7 @@ class adamw_optimizer(object):
         def clip_grad(self):
             cp.clip(self.params, -self.optimizer_parent.clip_val, self.optimizer_parent.clip_val, out=self.params)
 
-        def update_adamw(self, time_step, learning_rate):
+        def update_adamw(self, learning_rate):
             # momentum stored
             self.md_params *= self.optimizer_parent.beta1
             self.md_params += (1-self.optimizer_parent.beta1)*self.params
@@ -69,12 +72,12 @@ class adamw_optimizer(object):
 
             # non-persistent updates to momentum and variance that are specific to this update 
             # doing ^t on beta1 and beta2 once per step
-            b1T = self.optimizer_parent.beta1**time_step
-            b2T = self.optimizer_parent.beta2**time_step
+            b1T = self.optimizer_parent.beta1**self.optimizer_parent.time_step
+            b2T = self.optimizer_parent.beta2**self.optimizer_parent.time_step
             md_params_hat = self.md_params/(1-b1T)
             vd_params_hat = self.vd_params/(1-b2T)
 
-            schedule_multiplier = self.optimizer_parent.scheduler.get_lr(time_step)
+            schedule_multiplier = self.optimizer_parent.scheduler.get_lr(self.optimizer_parent.time_step)
 
             # calculating update val in multiple steps so it's explainable
             decoupled_weight_decay = self.optimizer_parent.reg_factor * self.params
