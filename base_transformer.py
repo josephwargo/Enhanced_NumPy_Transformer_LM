@@ -184,10 +184,19 @@ class transformer(object):
 ####################################
 # Training #
 ####################################
-    def train(self, x_batches, Y_batches, num_batches):
+    def train(self, x_batches, Y_batches, num_batches, **kwargs):
+        # unpacking kwargs
+        self.reg_factor = kwargs.get('reg_factor', .05)
+        self.scheduler_type = kwargs.get('scheduler_type', 'cosine_annealing')
+        self.eta_min = kwargs.get('eta_min', .1)
+        self.eta_max = kwargs.get('eta_max', 1)
+        self.time_max = kwargs.get('time_max', 1000)
 
         if self.optimizer_type=='adamw':
-            self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict, reg_factor=.05, scheduler_type='cosine_annealing', eta_min=.1, eta_max=1, time_max=1000)
+            reg_factor=.05, scheduler_type='cosine_annealing', eta_min=.9, eta_max=1, time_max=1000
+            self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict
+                                                   , reg_factor=self.reg_factor, scheduler_type='cosine_annealing'
+                                                   , eta_min=.9, eta_max=1, time_max=1000)
             self.optimizer.init_all_adamw(self.optimizer)
 
         for batch_num in range(num_batches):
