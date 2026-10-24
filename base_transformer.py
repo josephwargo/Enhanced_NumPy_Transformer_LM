@@ -169,7 +169,6 @@ class transformer(object):
             self.grad_clip()
             self.update_params()
 
-    # TODO: update to clip by global norm instead of clip val of 1
     def grad_clip(self):
         for grad_name, gradient in self.grad_dict.items():
             cp.clip(gradient, -self.clip_val, self.clip_val, out=gradient)

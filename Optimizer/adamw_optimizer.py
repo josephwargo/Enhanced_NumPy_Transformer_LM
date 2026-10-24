@@ -83,7 +83,7 @@ class adamw_optimizer(object):
         # clipping by the global norm, but passing in parameter from model and doing the update inplace (no duplicates, saves memory)
         def clip_grad(self):
             # RHS will be 1 if greater than the threshold due to min operation in parent
-            self.grads *= self.optimizer_parent.clip_val_threshold / self.optimizer_parent.global_norm
+            self.grads *= self.optimizer_parent.global_norm_scale_factor
 
         def update_adamw(self, learning_rate):
             # momentum stored
