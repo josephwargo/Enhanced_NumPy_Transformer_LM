@@ -27,6 +27,7 @@ class transformer(object):
         , loss_function='cross_entropy_loss'
         , learning_rate=.001, epochs=1, batch_size=8
         , clip_val=1, optimizer=None, debug=False
+        , **kwargs
     ):
         self.embeddings = embeddings
         self.debug = debug
@@ -48,6 +49,13 @@ class transformer(object):
         self.activations = hidden_layer_activations
 
         self.optimizer_type=optimizer
+
+        # unpacking kwargs
+        self.reg_factor = kwargs.get('reg_factor', .05)
+        self.scheduler_type = kwargs.get('scheduler_type', 'cosine_annealing')
+        self.eta_min = kwargs.get('eta_min', .1)
+        self.eta_max = kwargs.get('eta_max', 1)
+        self.time_max = kwargs.get('time_max', 1000)
         
 ####################################
 # Init Input Layer
@@ -189,13 +197,7 @@ class transformer(object):
 ####################################
 # Training #
 ####################################
-    def train(self, x_batches, Y_batches, num_batches, **kwargs):
-        # unpacking kwargs
-        self.reg_factor = kwargs.get('reg_factor', .05)
-        self.scheduler_type = kwargs.get('scheduler_type', 'cosine_annealing')
-        self.eta_min = kwargs.get('eta_min', .1)
-        self.eta_max = kwargs.get('eta_max', 1)
-        self.time_max = kwargs.get('time_max', 1000)
+    def train(self, x_batches, Y_batches, num_batches):
 
         if self.optimizer_type=='adamw':
             self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict
