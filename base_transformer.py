@@ -193,10 +193,9 @@ class transformer(object):
         self.time_max = kwargs.get('time_max', 1000)
 
         if self.optimizer_type=='adamw':
-            reg_factor=.05, scheduler_type='cosine_annealing', eta_min=.9, eta_max=1, time_max=1000
             self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict
-                                                   , reg_factor=self.reg_factor, scheduler_type='cosine_annealing'
-                                                   , eta_min=.9, eta_max=1, time_max=1000)
+                                                   , reg_factor=self.reg_factor, scheduler_type=self.scheduler_type
+                                                   , eta_min=self.eta_min, eta_max=self.eta_max, time_max=self.time_max)
             self.optimizer.init_all_adamw(self.optimizer)
 
         for batch_num in range(num_batches):
