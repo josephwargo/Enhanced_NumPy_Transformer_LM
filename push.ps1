@@ -1,3 +1,5 @@
+# run by entering ./push.ps1 in powershell
+
 #Requires -Version 5.1
 [CmdletBinding()]
 param(

@@ -101,7 +101,7 @@ class transformer(object):
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x_ind, Y=None, train=False):
+    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0):
         # x from ind to embeddings
         x = self.embeddings[x_ind]
         
@@ -121,9 +121,14 @@ class transformer(object):
             logits = self.output_layer.forward_pass(x, train)
 
             # flattening batches
-            logits_flat = logits.reshape(-1, logits.shape[-1])
             Y_flat = Y.reshape(-1)
-            loss = caa.cross_entropy_loss(logits_flat, Y_flat)
+            mask_for_loss = (Y_flat!= pad_token_ind)
+            Y_flat_masked = Y_flat[mask_for_loss]
+
+            logits_flat = logits.reshape(-1, logits.shape[-1])
+            logits_flat_masked = logits_flat[mask_for_loss]
+
+            loss = caa.cross_entropy_loss(logits_flat_masked, Y_flat_masked)
         else:
             # output layer
             logits = self.output_layer.forward_pass(x[:, -1, :], train)
