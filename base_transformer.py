@@ -107,6 +107,23 @@ class transformer(object):
         self.get_model_config()
 
 ####################################
+# Querying #
+####################################
+    
+    # call pred_next_token n times autoregressively to generate a full query
+    def query(self, x, num_passes):
+        for pass_num in range(num_passes):
+            x = x.append(self.pred_next_token(x)[0])
+        return x
+    
+    # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
+    def pred_next_token(self, x):
+            # TODO: add "temperature" so we can sample the softmax
+            logits, loss = self.forward_pass(x, train=False)
+            prob_dist = caa.activation('softmax', logits)
+            return cp.argmax(prob_dist, axis=1), prob_dist
+
+####################################
 # Forward Pass #
 ####################################
     def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0):
@@ -145,12 +162,6 @@ class transformer(object):
         del x
 
         return logits, loss
-    
-    def next_token_vocab_index(self, x):
-        # TODO: add "temperature" so we can sample the softmax
-        logits, loss = self.forward_pass(x)
-        prob_dist = caa.activation('softmax', logits)
-        return cp.argmax(prob_dist, axis=1), prob_dist
 
 ####################################
 # Backward Pass #
