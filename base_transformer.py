@@ -113,7 +113,7 @@ class transformer(object):
     # call pred_next_token n times autoregressively to generate a full query
     def query(self, x, num_passes):
         for pass_num in range(num_passes):
-            x = x.append(self.pred_next_token(x)[0])
+            x = cp.append(x, self.pred_next_token(x)[0])
         return x
     
     # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
