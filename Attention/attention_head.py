@@ -52,7 +52,7 @@ class attention_head(object):
         if train==False and inference_mode=='decode':
             x_for_q_k_v = x[:,-1,:]
         else:
-            x_for_q_k_v=x
+            x_for_q_k_v = x
 
         # actual q, k, and v value calcs - this is done regardless of whether we are doing training, prefill, or decode, so lumping it together
         # reshaping the output to be (batch, seq_len, num_heads, head_shape)
@@ -60,6 +60,7 @@ class attention_head(object):
         # as this is needed to calculate the attention score for different heads and must be done in two steps
         # will later reshape to (batch, seq_len, d_model) when we "concatenate" the separate heads in the attention block
         k_val = (x_for_q_k_v @ self.W_k.T).reshape(x_for_q_k_v.shape[0], x_for_q_k_v.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
+        print(k_val)
         v_val = (x_for_q_k_v @ self.W_v.T).reshape(x_for_q_k_v.shape[0], x_for_q_k_v.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         # we do not need to cache q ever so we can just set the actual q to be the full cal no matter what
         self.q = (x_for_q_k_v @ self.W_q.T).reshape(x_for_q_k_v.shape[0], x_for_q_k_v.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
