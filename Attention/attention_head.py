@@ -41,29 +41,40 @@ class attention_head(object):
         self.dL_dW_k = cp.zeros_like(self.W_k).astype(cp.float32)
         self.dL_dW_v = cp.zeros_like(self.W_v).astype(cp.float32)
 
+        # initiating KV cache - only to be used during inference, though
+        self.kv_cache = {}
+
 ####################################
 # Forward Pass #
 ####################################
-    def calculate_q_k_v(self, x, train=False):
+    def calculate_q_k_v(self, x, train=False, inference_mode='prefill'):
+        # slicing x to be full sequence or just latest token based training, prefill, or decode
+        if train==False and inference_mode=='decode':
+            x = x[:,-1,:] 
+
+        # actual q, k, and v value calcs - this is done regardless of whether we are doing training, prefill, or decode, so lumping it together
         # reshaping the output to be (batch, seq_len, num_heads, head_shape)
         # then transposing of shape (batch_size, num_heads, seq_len, head_shape)
         # as this is needed to calculate the attention score for different heads and must be done in two steps
         # will later reshape to (batch, seq_len, d_model) when we "concatenate" the separate heads in the attention block
-        q_proj = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension)
-        self.q = q_proj.transpose(0,2,1,3)
-        k_proj = (x @ self.W_k.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension)
-        self.k = k_proj.transpose(0,2,1,3)
-        v_proj = (x @ self.W_v.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension)
-        self.v = v_proj.transpose(0,2,1,3)
+        k_val = (x @ self.W_k.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
+        v_val = (x @ self.W_v.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
+        # we do not need to cache q ever so we can just set the actual q to be the full cal no matter what
+        self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
+
+        # either setting or appending k, and v based on training, prefill, or decode
+        if train==False and inference_mode=='decode':
+            self.k = cp.append(self.k, k_val)
+            self.v = cp.append(self.v, v_val)
+        else:
+            self.k = k_val
+            self.v = v_val
 
         # if train, storing x
         if train:
             self.prev_layer_output = x
 
-    def forward_pass(self, x, train=False):
-        # calculating q, k, and v
-        self.calculate_q_k_v(x, train)
-
+    def forward_pass(self, x, train=False, inference_mode='prefill'):
         # calculating attention score & scaling
         score_matrix = self.q @ self.k.transpose(0,1,3,2)
         scaled_score_matrix = score_matrix / self.dim_sqrt
