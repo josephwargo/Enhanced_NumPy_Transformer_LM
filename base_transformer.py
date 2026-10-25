@@ -216,7 +216,7 @@ class transformer(object):
 # Training #
 ####################################
     def train(self, x_batches, Y_batches, num_batches):
-
+        print('hello! is this working?')
         if self.optimizer_type=='adamw':
             self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict
                                                    , reg_factor=self.reg_factor, scheduler_type=self.scheduler_type
