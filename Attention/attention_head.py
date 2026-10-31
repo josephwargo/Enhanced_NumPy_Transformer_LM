@@ -51,11 +51,15 @@ class attention_head(object):
         # then transposing of shape (batch_size, num_heads, seq_len, head_shape)
         # as this is needed to calculate the attention score for different heads and must be done in two steps
         # will later reshape to (batch, seq_len, d_model) when we "concatenate" the separate heads in the attention block
+        print("x shape:")
         print(x.shape)
         k_val = (x @ self.W_k.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         v_val = (x @ self.W_v.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         # we do not need to cache q ever so we can just set the actual q to be the full cal no matter what
         self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
+        print("q shape:")
+        print(self.q.shape)
+        print()
 
         # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
         if train==False and x.shape[1] == 1:

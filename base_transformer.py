@@ -126,10 +126,10 @@ class transformer(object):
     
     # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
     def pred_next_token(self, x):
-            # TODO: add "temperature" so we can sample the softmax
-            logits, loss = self.forward_pass(x, train=False)
-            prob_dist = caa.activation('softmax', logits)
-            return cp.argmax(prob_dist, axis=1), prob_dist
+        # TODO: add "temperature" so we can sample the softmax
+        logits, loss = self.forward_pass(x, train=False)
+        prob_dist = caa.activation('softmax', logits)
+        return cp.argmax(prob_dist, axis=1), prob_dist
 
 ####################################
 # Forward Pass #
