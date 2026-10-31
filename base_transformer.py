@@ -116,9 +116,9 @@ class transformer(object):
             # if first pass, prefill on full seq
             if pass_num==0:
                 # new_x_shape = (1, x.shape[-1]+1)
-                new_token = self.pred_next_token(x)[0] # only returns new token generated
+                new_token = cp.expand_dims(self.pred_next_token(x)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
             else:
-                new_token = self.pred_next_token(new_token)[0] # only returns new token generated
+                new_token = cp.expand_dims(self.pred_next_token(new_token)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
             # reshaping so model reads this as batch size of 1
             
             x = cp.append(x, new_token)
