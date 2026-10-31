@@ -59,7 +59,7 @@ class attention_head(object):
         self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         print("q shape:")
         print(self.q.shape)
-        print()
+        # print()
 
         # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
         if train==False and x.shape[1] == 1:
@@ -75,7 +75,9 @@ class attention_head(object):
 
     def forward_pass(self, x, train=False):
         self.calculate_q_k_v(x, train)
-        
+        print("k transposed shape:")
+        print(self.k.transpose(0,1,3,2))
+        print()
         # calculating attention score & scaling
         score_matrix = self.q @ self.k.transpose(0,1,3,2)
         scaled_score_matrix = score_matrix / self.dim_sqrt
