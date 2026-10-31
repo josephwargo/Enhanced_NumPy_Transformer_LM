@@ -51,26 +51,26 @@ class attention_head(object):
         # then transposing of shape (batch_size, num_heads, seq_len, head_shape)
         # as this is needed to calculate the attention score for different heads and must be done in two steps
         # will later reshape to (batch, seq_len, d_model) when we "concatenate" the separate heads in the attention block
-        print("x shape:")
-        print(x.shape)
+        # print("x shape:")
+        # print(x.shape)
         k_val = (x @ self.W_k.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         v_val = (x @ self.W_v.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         # we do not need to cache q ever so we can just set the actual q to be the full cal no matter what
         self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
-        print("q shape:")
-        print(self.q.shape)
-        print("k_val shape:")
-        print(k_val.shape)
+        # print("q shape:")
+        # print(self.q.shape)
+        # print("k_val shape:")
+        # print(k_val.shape)
         
         # print()
 
         # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
         if train==False and x.shape[1] == 1:
-            print("og k shape:")
-            print(self.k.shape)
+            # print("og k shape:")
+            # print(self.k.shape)
             # self.k = cp.append(self.k, k_val)
             self.k = cp.concatenate((self.k, k_val), axis=2)
-            self.v = cp.append(self.v, v_val)
+            self.v = cp.concatenate((self.v, v_val), axis=2)
         else:
             self.k = k_val
             self.v = v_val
@@ -81,11 +81,11 @@ class attention_head(object):
 
     def forward_pass(self, x, train=False):
         self.calculate_q_k_v(x, train)
-        print("new k shape:")
-        print(self.k.shape)
-        print("k transposed shape:")
-        print(self.k.transpose(0,1,3,2).shape)
-        print()
+        # print("new k shape:")
+        # print(self.k.shape)
+        # print("k transposed shape:")
+        # print(self.k.transpose(0,1,3,2).shape)
+        # print()
         # calculating attention score & scaling
         score_matrix = self.q @ self.k.transpose(0,1,3,2)
         scaled_score_matrix = score_matrix / self.dim_sqrt
