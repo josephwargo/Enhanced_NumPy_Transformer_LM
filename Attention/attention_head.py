@@ -76,7 +76,7 @@ class attention_head(object):
     def forward_pass(self, x, train=False):
         self.calculate_q_k_v(x, train)
         print("k transposed shape:")
-        print(self.k.transpose(0,1,3,2))
+        print(self.k.transpose(0,1,3,2).shape)
         print()
         # calculating attention score & scaling
         score_matrix = self.q @ self.k.transpose(0,1,3,2)
