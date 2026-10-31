@@ -75,8 +75,8 @@ class attention_head(object):
         if train:
             self.prev_layer_output = x
 
-    def forward_pass(self, x, train=False, inference_mode='prefill'):
-        self.calculate_q_k_v(x, train, inference_mode)
+    def forward_pass(self, x, train=False):#, inference_mode='prefill'):
+        self.calculate_q_k_v(x, train)#, inference_mode)
         
         # calculating attention score & scaling
         score_matrix = self.q @ self.k.transpose(0,1,3,2)
