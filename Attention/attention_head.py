@@ -61,13 +61,14 @@ class attention_head(object):
         print(self.q.shape)
         print("k_val shape:")
         print(k_val.shape)
-        print("og k shape:")
-        print(self.k.shape)
+        
         # print()
 
         # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
         if train==False and x.shape[1] == 1:
             self.k = cp.append(self.k, k_val)
+            print("og k shape:")
+            print(self.k.shape)
             self.v = cp.append(self.v, v_val)
         else:
             self.k = k_val
