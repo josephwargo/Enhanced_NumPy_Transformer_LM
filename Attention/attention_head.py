@@ -68,7 +68,8 @@ class attention_head(object):
         if train==False and x.shape[1] == 1:
             print("og k shape:")
             print(self.k.shape)
-            self.k = cp.append(self.k, k_val)
+            # self.k = cp.append(self.k, k_val)
+            self.k = cp.concatenate(self.k, k_val, axis=2)
             self.v = cp.append(self.v, v_val)
         else:
             self.k = k_val
