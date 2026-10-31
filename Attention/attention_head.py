@@ -59,6 +59,8 @@ class attention_head(object):
         self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         print("q shape:")
         print(self.q.shape)
+        print("k_val shape:")
+        print(k_val.shape)
         # print()
 
         # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
