@@ -113,13 +113,11 @@ class transformer(object):
     # call pred_next_token n times autoregressively to generate a full query
     def query(self, x, num_passes):
         for pass_num in range(num_passes):
-            # if first pass, prefill mode but still only generate new token
+            # if first pass, prefill on full seq
             if pass_num==0:
-                # inference_mode='prefill'
                 # new_x_shape = (1, x.shape[-1]+1)
                 new_token = self.pred_next_token(x)[0] # only returns new token generated
             else:
-                # inference_mode='decode'
                 new_token = self.pred_next_token(new_token)[0] # only returns new token generated
             # reshaping so model reads this as batch size of 1
             
@@ -127,16 +125,16 @@ class transformer(object):
         return x
     
     # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
-    def pred_next_token(self, x, inference_mode='prefill'):
+    def pred_next_token(self, x):
             # TODO: add "temperature" so we can sample the softmax
-            logits, loss = self.forward_pass(x, train=False, inference_mode=inference_mode)
+            logits, loss = self.forward_pass(x, train=False)
             prob_dist = caa.activation('softmax', logits)
             return cp.argmax(prob_dist, axis=1), prob_dist
 
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x_ind, Y=None, train=False, inference_mode='prefill', pad_token_ind=0):
+    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0):
         # x from ind to embeddings
         x = self.embeddings[x_ind]
         
@@ -146,7 +144,7 @@ class transformer(object):
         x = self.positional_embeddings.forward_pass(x, seq_len, train)
         # transformer blocks
         for transformer_block in self.transformer_layers.values():
-            x = transformer_block.forward_pass(x, train, inference_mode=inference_mode)
+            x = transformer_block.forward_pass(x, train)
 
         # final layer norm
         x = self.output_layer_norm.forward_pass(x, train)

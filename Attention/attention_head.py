@@ -44,12 +44,7 @@ class attention_head(object):
 ####################################
 # Forward Pass #
 ####################################
-    def calculate_q_k_v(self, x, train=False): #, inference_mode='prefill'):
-        # slicing x to be full sequence or just latest token based training, prefill, or decode
-        # if train==False and inference_mode=='decode':
-        #     x_for_q_k_v = x[:,-1,:]
-        # else:
-        #     x_for_q_k_v = x
+    def calculate_q_k_v(self, x, train=False):
 
         # actual q, k, and v value calcs - this is done regardless of whether we are doing training, prefill, or decode, so lumping it together
         # reshaping the output to be (batch, seq_len, num_heads, head_shape)
@@ -62,8 +57,7 @@ class attention_head(object):
         # we do not need to cache q ever so we can just set the actual q to be the full cal no matter what
         self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
 
-        # either setting or appending k, and v based on training, prefill, or decode
-        # if train==False and inference_mode=='decode':
+        # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
         if train==False and x.shape[1] == 1:
             self.k = cp.append(self.k, k_val)
             self.v = cp.append(self.v, v_val)
@@ -75,8 +69,8 @@ class attention_head(object):
         if train:
             self.prev_layer_output = x
 
-    def forward_pass(self, x, train=False):#, inference_mode='prefill'):
-        self.calculate_q_k_v(x, train)#, inference_mode)
+    def forward_pass(self, x, train=False):
+        self.calculate_q_k_v(x, train)
         
         # calculating attention score & scaling
         score_matrix = self.q @ self.k.transpose(0,1,3,2)

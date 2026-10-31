@@ -41,7 +41,7 @@ class transformer_block(object):
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x, train=False, inference_mode='prefill'):
+    def forward_pass(self, x, train=False):
         # first layer norm and attention masked self-attention and residual add
         residual_with_self_attention = x + self.self_attention.forward_pass(self.layer_norm_1.forward_pass(x, train), train)
 
