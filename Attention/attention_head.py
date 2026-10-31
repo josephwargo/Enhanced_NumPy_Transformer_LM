@@ -44,7 +44,7 @@ class attention_head(object):
 ####################################
 # Forward Pass #
 ####################################
-    def calculate_q_k_v(self, x, train=False, inference_mode='prefill'):
+    def calculate_q_k_v(self, x, train=False): #, inference_mode='prefill'):
         # slicing x to be full sequence or just latest token based training, prefill, or decode
         # if train==False and inference_mode=='decode':
         #     x_for_q_k_v = x[:,-1,:]
@@ -56,6 +56,7 @@ class attention_head(object):
         # then transposing of shape (batch_size, num_heads, seq_len, head_shape)
         # as this is needed to calculate the attention score for different heads and must be done in two steps
         # will later reshape to (batch, seq_len, d_model) when we "concatenate" the separate heads in the attention block
+        print(x.shape)
         k_val = (x @ self.W_k.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         v_val = (x @ self.W_v.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
         # we do not need to cache q ever so we can just set the actual q to be the full cal no matter what
