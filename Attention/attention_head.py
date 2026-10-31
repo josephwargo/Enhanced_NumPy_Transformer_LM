@@ -61,6 +61,8 @@ class attention_head(object):
         print(self.q.shape)
         print("k_val shape:")
         print(k_val.shape)
+        print("og k shape:")
+        print(self.k.shape)
         # print()
 
         # either setting or appending k, and v based on training, prefill, or decode - which we can determine based on the size of x
@@ -77,7 +79,7 @@ class attention_head(object):
 
     def forward_pass(self, x, train=False):
         self.calculate_q_k_v(x, train)
-        print("k shape:")
+        print("new k shape:")
         print(self.k.shape)
         print("k transposed shape:")
         print(self.k.transpose(0,1,3,2).shape)
