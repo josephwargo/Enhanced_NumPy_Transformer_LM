@@ -113,14 +113,17 @@ class transformer(object):
     # call pred_next_token n times autoregressively to generate a full query
     def query(self, x, num_passes):
         for pass_num in range(num_passes):
-            # only prefill mode on the first pass
+            # if first pass, prefill mode but still only generate new token
             if pass_num==0:
-                inference_mode='prefill'
+                # inference_mode='prefill'
+                # new_x_shape = (1, x.shape[-1]+1)
+                new_token = self.pred_next_token(x)[0] # only returns new token generated
             else:
-                inference_mode='decode'
+                # inference_mode='decode'
+                new_token = self.pred_next_token(new_token)[0] # only returns new token generated
             # reshaping so model reads this as batch size of 1
-            new_x_shape = (1, x.shape[-1]+1)
-            x = cp.append(x, self.pred_next_token(x, inference_mode=inference_mode)[0]).reshape(new_x_shape)
+            
+            x = cp.append(x, new_token)
         return x
     
     # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
