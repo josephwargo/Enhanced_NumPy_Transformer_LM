@@ -116,32 +116,32 @@ class transformer(object):
             # if first pass, prefill on full seq
             if pass_num==0:
                 # new_x_shape = (1, x.shape[-1]+1)
-                new_token = cp.expand_dims(self.pred_next_token(x)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+                new_token = cp.expand_dims(self.pred_next_token(x, pass_num)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
             else:
-                new_token = cp.expand_dims(self.pred_next_token(new_token)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+                new_token = cp.expand_dims(self.pred_next_token(new_token, pass_num)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
             # reshaping so model reads this as batch size of 1
             
             x = cp.append(x, new_token)
         return x
     
     # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
-    def pred_next_token(self, x):
+    def pred_next_token(self, x, pass_num=0):
         # TODO: add "temperature" so we can sample the softmax
-        logits, loss = self.forward_pass(x, train=False)
+        logits, loss = self.forward_pass(x, train=False, pass_num=pass_num)
         prob_dist = caa.activation('softmax', logits)
         return cp.argmax(prob_dist, axis=1), prob_dist
 
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0):
+    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0, pass_num=0):
         # x from ind to embeddings
         x = self.embeddings[x_ind]
         
         # input layer
         seq_len = x.shape[-2]
         x = self.input_layer.forward_pass(x, train)
-        x = self.positional_embeddings.forward_pass(x, seq_len, train)
+        x = self.positional_embeddings.forward_pass(x, seq_len, train, pass_num)
         # transformer blocks
         for transformer_block in self.transformer_layers.values():
             x = transformer_block.forward_pass(x, train)
