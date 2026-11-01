@@ -139,9 +139,12 @@ class transformer(object):
         x = self.embeddings[x_ind]
         
         # input layer
-        seq_len = x.shape[-2]
+        if pass_num==0:
+            seq_len = x.shape[-2]
+        else:
+            seq_len = seq_len + 1
         x = self.input_layer.forward_pass(x, train)
-        x = self.positional_embeddings.forward_pass(x, seq_len, train, pass_num)
+        x = self.positional_embeddings.forward_pass(x, seq_len, train) #, pass_num)
         # transformer blocks
         for transformer_block in self.transformer_layers.values():
             x = transformer_block.forward_pass(x, train)

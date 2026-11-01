@@ -19,10 +19,10 @@ class positional_embedding(object):
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x, seq_len, train=False, pass_num=0):
+    def forward_pass(self, x, seq_len, train=False): #, pass_num=0):
         # decode - x is only a single token, so should only use positional embedding for that actual token
         if train==False and x.shape[1] == 1:
-            embeddings_sliced = self.embeddings[seq_len+pass_num]
+            embeddings_sliced = self.embeddings[seq_len]
         # training and prefill - use positional embeddings up to the seq len
         else:
             embeddings_sliced = self.embeddings[:seq_len]
