@@ -115,12 +115,14 @@ class transformer(object):
         for pass_num in range(num_passes):
             # if first pass, prefill on full seq
             if pass_num==0:
-                # new_x_shape = (1, x.shape[-1]+1)
-                new_token = cp.expand_dims(self.pred_next_token(x, pass_num)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+                seq_len = x.shape[-2]
+                new_token = cp.expand_dims(self.pred_next_token(x, seq_len)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+                
             else:
-                new_token = cp.expand_dims(self.pred_next_token(new_token, pass_num)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
-            # reshaping so model reads this as batch size of 1
-            
+                seq_len = seq_len + 1
+                new_token = cp.expand_dims(self.pred_next_token(new_token, seq_len)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+
+            # reshaping so model reads this as batch size of 1            
             x = cp.append(x, new_token)
         return x
     
@@ -134,17 +136,13 @@ class transformer(object):
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0, pass_num=0):
+    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0, seq_len=0):
         # x from ind to embeddings
         x = self.embeddings[x_ind]
         
         # input layer
-        if pass_num==0:
-            seq_len = x.shape[-2]
-        else:
-            seq_len = seq_len + 1
         x = self.input_layer.forward_pass(x, train)
-        x = self.positional_embeddings.forward_pass(x, seq_len, train) #, pass_num)
+        x = self.positional_embeddings.forward_pass(x, seq_len, train)
         # transformer blocks
         for transformer_block in self.transformer_layers.values():
             x = transformer_block.forward_pass(x, train)
