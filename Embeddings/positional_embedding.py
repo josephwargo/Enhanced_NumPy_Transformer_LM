@@ -21,8 +21,9 @@ class positional_embedding(object):
 ####################################
     def forward_pass(self, x, seq_len, train=False):
         # decode - x is only a single token, so should only use positional embedding for that actual token
+        # need to do seq_len-1 because when we slice an array with an upper bound, it give us less than that, but when we index with an int it gives us that directly
         if train==False and x.shape[1] == 1:
-            embeddings_sliced = self.embeddings[seq_len]
+            embeddings_sliced = self.embeddings[seq_len - 1]
         # training and prefill - use positional embeddings up to the seq len
         else:
             embeddings_sliced = self.embeddings[:seq_len]
