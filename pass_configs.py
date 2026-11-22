@@ -10,4 +10,4 @@ class pass_configs:
     pass_num: int=0
     seq_len: int=0
 
-    forward_pass_mode: Literal['prefill', 'decode']
+    forward_pass_mode: Literal['prefill', 'decode'] = None
