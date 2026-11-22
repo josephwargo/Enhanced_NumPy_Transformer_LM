@@ -202,6 +202,7 @@ class transformer(object):
 # Training #
 ####################################
     def train(self, x_batches, Y_batches, num_batches):
+        pass_configs = pc.pass_configs(train=True, pad_token_ind=0, pass_num=0)
         if self.optimizer_type=='adamw':
             self.optimizer = adamw.adamw_optimizer(model_dict=self.model_dict, grad_dict=self.grad_dict
                                                    , reg_factor=self.reg_factor, scheduler_type=self.scheduler_type
@@ -212,7 +213,7 @@ class transformer(object):
             x_batch = x_batches[batch_num]
             Y_batch = Y_batches[batch_num]
             # forward pass
-            batch_output = self.forward_pass(x_batch, Y_batch, train=True)
+            batch_output = self.forward_pass(x_batch, Y_batch, pass_configs)
             logits = batch_output[0]
             loss = batch_output[1]
             
