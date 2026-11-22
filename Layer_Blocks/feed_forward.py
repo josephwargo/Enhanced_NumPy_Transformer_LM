@@ -50,6 +50,7 @@ class neuron_layer(object):
             # explicitly not storing the hidden state for an output layer. it is NOT needed;
             # as instead the value is returned at the end of the full forward pass
             self.hidden_state = None
+            print(pass_configs.train)
             if pass_configs.train:
                 self.prev_layer_output = x
         # an other layer - yes activation

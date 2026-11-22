@@ -237,8 +237,9 @@ class transformer(object):
         for pass_num in range(num_passes):
             # if first pass, prefill on full seq
             pass_configs.pass_num=pass_num
+            print(pass_configs.train)
 
-            if pass_num==0:
+            if pass_configs.pass_num==0:
                 pass_configs.forward_pass_mode='prefill'
                 new_token = cp.expand_dims(self.pred_next_token(x, pass_configs)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
             else:
