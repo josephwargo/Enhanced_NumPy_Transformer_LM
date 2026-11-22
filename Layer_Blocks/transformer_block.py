@@ -48,7 +48,7 @@ class transformer_block(object):
         # second layer norm & linear forward pass and residual add
         
         transformer_block_output = residual_with_self_attention + self.feed_forward_layer.forward_pass(
-            self.layer_norm_2.forward_pass(residual_with_self_attention, pass_configs.train), pass_configs)
+            self.layer_norm_2.forward_pass(residual_with_self_attention, pass_configs), pass_configs)
 
         return transformer_block_output
 
