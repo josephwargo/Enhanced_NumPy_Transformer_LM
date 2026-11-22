@@ -132,11 +132,11 @@ class transformer(object):
             x = transformer_block.forward_pass(x, pass_configs)
 
         # final layer norm
-        x = self.output_layer_norm.forward_pass(x, pass_configs.train)
+        x = self.output_layer_norm.forward_pass(x, pass_configs)
 
         if pass_configs.train:
             # output layer
-            logits = self.output_layer.forward_pass(x, pass_configs.train)
+            logits = self.output_layer.forward_pass(x, pass_configs)
 
             # flattening batches
             Y_flat = Y.reshape(-1)
@@ -149,7 +149,7 @@ class transformer(object):
             loss = caa.cross_entropy_loss(logits_flat_masked, Y_flat_masked)
         else:
             # output layer
-            logits = self.output_layer.forward_pass(x[:, -1, :], pass_configs.train)
+            logits = self.output_layer.forward_pass(x[:, -1, :], pass_configs)
             loss = None
 
         del x

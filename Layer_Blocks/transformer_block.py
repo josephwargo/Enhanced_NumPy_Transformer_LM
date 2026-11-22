@@ -43,12 +43,12 @@ class transformer_block(object):
 ####################################
     def forward_pass(self, x, pass_configs):
         # first layer norm and attention masked self-attention and residual add
-        residual_with_self_attention = x + self.self_attention.forward_pass(self.layer_norm_1.forward_pass(x, pass_configs.train), pass_configs.train)
+        residual_with_self_attention = x + self.self_attention.forward_pass(self.layer_norm_1.forward_pass(x, pass_configs), pass_configs)
 
         # second layer norm & linear forward pass and residual add
         
         transformer_block_output = residual_with_self_attention + self.feed_forward_layer.forward_pass(
-            self.layer_norm_2.forward_pass(residual_with_self_attention, pass_configs.train), pass_configs.train)
+            self.layer_norm_2.forward_pass(residual_with_self_attention, pass_configs.train), pass_configs)
 
         return transformer_block_output
 

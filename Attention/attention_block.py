@@ -39,7 +39,7 @@ class attention_block(object):
 ####################################
     def forward_pass(self, x, pass_configs):
         # calculating the scores for each head
-        masked_self_attention = self.head.forward_pass(x, pass_configs.train)
+        masked_self_attention = self.head.forward_pass(x, pass_configs)
 
         # concatenating scores together and running through the weights to get desired output shape
         # concatenating by reshaping from (batch, num_heads, seq_len, head_shape) to (batch, seq_len, d_model)
