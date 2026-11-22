@@ -11,6 +11,8 @@ import json
 
 from Optimizer import adamw_optimizer as adamw
 
+import pass_configs as pc
+
 # entire net
 class transformer(object):
 ####################################
@@ -110,58 +112,35 @@ class transformer(object):
         self.get_model_config()
 
 ####################################
-# Querying #
-####################################
-    
-    # call pred_next_token n times autoregressively to generate a full query
-    def query(self, x, num_passes):
-        for pass_num in range(num_passes):
-            # if first pass, prefill on full seq
-            if pass_num==0:
-                new_token = cp.expand_dims(self.pred_next_token(x, pass_num)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
-            else:
-                new_token = cp.expand_dims(self.pred_next_token(new_token, pass_num)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
-            
-            x = cp.append(x, new_token)
-        return x
-    
-    # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
-    def pred_next_token(self, x, pass_num=0):
-        # TODO: add "temperature" so we can sample the softmax
-        logits, loss = self.forward_pass(x, train=False, pass_num=pass_num)
-        prob_dist = caa.activation('softmax', logits)
-        return cp.argmax(prob_dist, axis=1), prob_dist
-
-####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x_ind, Y=None, train=False, pad_token_ind=0, pass_num=0):
+    def forward_pass(self, x_ind, pass_configs, Y=None):
         # x from ind to embeddings
         x = self.embeddings[x_ind]
         
         # input layer
-        x = self.input_layer.forward_pass(x, train)
+        x = self.input_layer.forward_pass(x, pass_configs)
 
         # pos embeddings
-        if pass_num==0:
-            self.seq_len = x.shape[-2]
+        if pass_configs.pass_num==0:
+            pass_configs.seq_len = x.shape[-2]
         else:
-            self.seq_len = self.seq_len + 1
-        x = self.positional_embeddings.forward_pass(x, self.seq_len, train)#, pass_num)
+            pass_configs.seq_len = pass_configs.seq_len + 1
+        x = self.positional_embeddings.forward_pass(x, pass_configs)#, pass_num)
         # transformer blocks
         for transformer_block in self.transformer_layers.values():
-            x = transformer_block.forward_pass(x, train)
+            x = transformer_block.forward_pass(x, pass_configs)
 
         # final layer norm
-        x = self.output_layer_norm.forward_pass(x, train)
+        x = self.output_layer_norm.forward_pass(x, pass_configs.train)
 
-        if train:
+        if pass_configs.train:
             # output layer
-            logits = self.output_layer.forward_pass(x, train)
+            logits = self.output_layer.forward_pass(x, pass_configs.train)
 
             # flattening batches
             Y_flat = Y.reshape(-1)
-            mask_for_loss = (Y_flat!= pad_token_ind)
+            mask_for_loss = (Y_flat!= pass_configs.pad_token_ind)
             Y_flat_masked = Y_flat[mask_for_loss]
 
             logits_flat = logits.reshape(-1, logits.shape[-1])
@@ -170,7 +149,7 @@ class transformer(object):
             loss = caa.cross_entropy_loss(logits_flat_masked, Y_flat_masked)
         else:
             # output layer
-            logits = self.output_layer.forward_pass(x[:, -1, :], train)
+            logits = self.output_layer.forward_pass(x[:, -1, :], pass_configs.train)
             loss = None
 
         del x
@@ -247,6 +226,32 @@ class transformer(object):
             # mempool.free_all_blocks()
             # pinned_mempool.free_all_blocks()
 
+####################################
+# Querying #
+####################################
+    # call pred_next_token n times autoregressively to generate a full query
+    def query(self, x, num_passes):
+        pass_configs = pc.pass_configs(train=False, pad_token_ind=0, pass_num=0)
+
+        for pass_num in range(num_passes):
+            # if first pass, prefill on full seq
+            pass_configs.pass_num=pass_num
+
+            if pass_num==0:
+                pass_configs.forward_pass_mode='prefill'
+                new_token = cp.expand_dims(self.pred_next_token(x, pass_configs)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+            else:
+                new_token = cp.expand_dims(self.pred_next_token(new_token, pass_configs)[0], axis=0) # only returns new token generated, must be reshaped to be a "batch of 1"
+            
+            x = cp.concatenate((x, new_token), axis=1)
+        return x
+    
+    # generate argmax (and prob_dist, at least for now) of softmax of final layer after full forward pass
+    def pred_next_token(self, x, pass_configs):
+        # TODO: add "temperature" so we can sample the softmax
+        logits, loss = self.forward_pass(x, pass_configs)
+        prob_dist = caa.activation('softmax', logits)
+        return cp.argmax(prob_dist, axis=1), prob_dist
 
 ####################################
 # Flat dicts of params and gradients #

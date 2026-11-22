@@ -43,20 +43,20 @@ class neuron_layer(object):
 ####################################
 # Forward Pass #
 ####################################
-    def forward_pass(self, x, train=False):
+    def forward_pass(self, x, pass_configs):
         # if it is an output layer - no activation
         if self.is_output_layer:
             hidden_state = x @ self.layer_weights.T + self.bias
             # explicitly not storing the hidden state for an output layer. it is NOT needed;
             # as instead the value is returned at the end of the full forward pass
             self.hidden_state = None
-            if train:
+            if pass_configs.train:
                 self.prev_layer_output = x
         # an other layer - yes activation
         else:
             hidden_state = x @ self.layer_weights.T + self.bias
             # storing hidden state BEFORE any activation is done
-            if train:
+            if pass_configs.train:
                 self.hidden_state = hidden_state
                 self.prev_layer_output = x
             hidden_state = caa.activation(self.activation, hidden_state)

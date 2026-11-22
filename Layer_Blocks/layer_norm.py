@@ -22,23 +22,23 @@ class layer_norm(object):
 ####################################
 # Forward Pass #
 ####################################
-    def x_hat(self, x, train=False):
+    def x_hat(self, x, pass_configs):
 
         x_mean = cp.mean(x, axis=-1, keepdims=True)
         x_std_dev = cp.sqrt(cp.var(x, axis=-1, keepdims=True) + 1e-5)
 
-        if train:
+        if pass_configs.train:
             self.x_std_dev = x_std_dev
 
         x_hat = (x - x_mean) / x_std_dev
 
         return x_hat
     
-    def forward_pass(self, x, train=False):
+    def forward_pass(self, x, pass_configs):
         
-        x_hat_val = self.x_hat(x, train)
+        x_hat_val = self.x_hat(x, pass_configs.train)
         
-        if train:
+        if pass_configs.train:
             self.x_hat_val = x_hat_val
 
         layer_normed = self.gamma * x_hat_val + self.beta

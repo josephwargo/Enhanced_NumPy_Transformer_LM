@@ -44,7 +44,7 @@ class attention_head(object):
 ####################################
 # Forward Pass #
 ####################################
-    def calculate_q_k_v(self, x, train=False):
+    def calculate_q_k_v(self, x, pass_configs):
 
         # actual q, k, and v value calcs - this is done regardless of whether we are doing training, prefill, or decode, so lumping it together
         # reshaping the output to be (batch, seq_len, num_heads, head_shape)
@@ -57,8 +57,8 @@ class attention_head(object):
         self.q = (x @ self.W_q.T).reshape(x.shape[0], x.shape[1], self.num_heads, self.head_dimension).transpose(0,2,1,3)
 
 
-        # either setting or concatenating to k, and v based on training, prefill, or decode - which we can determine based on the size of x
-        if train==False and x.shape[1] == 1:
+        # either setting or concatenating to k, and v based on training, prefill, or decode
+        if pass_configs.train==False and pass_configs.forward_pass_mode=='decode':
             self.k = cp.concatenate((self.k, k_val), axis=2)
             self.v = cp.concatenate((self.v, v_val), axis=2)
         else:
@@ -66,7 +66,7 @@ class attention_head(object):
             self.v = v_val
 
         # if train, storing x
-        if train:
+        if pass_configs.train:
             self.prev_layer_output = x
 
     def forward_pass(self, x, train=False):
