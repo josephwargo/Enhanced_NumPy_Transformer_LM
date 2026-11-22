@@ -213,7 +213,7 @@ class transformer(object):
             x_batch = x_batches[batch_num]
             Y_batch = Y_batches[batch_num]
             # forward pass
-            batch_output = self.forward_pass(x_batch, Y_batch, pass_configs)
+            batch_output = self.forward_pass(x_batch, pass_configs, Y_batch)
             logits = batch_output[0]
             loss = batch_output[1]
             
