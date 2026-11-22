@@ -36,7 +36,7 @@ class layer_norm(object):
     
     def forward_pass(self, x, pass_configs):
         
-        x_hat_val = self.x_hat(x, pass_configs.train)
+        x_hat_val = self.x_hat(x, pass_configs)
         
         if pass_configs.train:
             self.x_hat_val = x_hat_val
